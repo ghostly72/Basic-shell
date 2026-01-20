@@ -12,7 +12,12 @@ int main(int argc, char *argv[]) {
     fgets(cmd,sizeof(cmd),stdin);
     cmd[strcspn(cmd,"\n")]=0;
     if(strcmp("exit",cmd)==0)break;
-    printf("%s: command not found\n",cmd);
+    else if(strncmp("echo",cmd,4)==0){
+      int len=strlen(cmd);
+      len-=5;
+      printf("%.*s\n",len,cmd+5);
+    }
+    else printf("%s: command not found\n",cmd);
   }
   
 
