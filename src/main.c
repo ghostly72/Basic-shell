@@ -6,11 +6,14 @@ int main(int argc, char *argv[]) {
   // Flush after every printf
   setbuf(stdout, NULL);
 
-  printf("$ ");
-  char cmd[100];
-  fgets(cmd,sizeof(cmd),stdin);
-  cmd[strcspn(cmd,"\n")]=0;
-  printf("%s: command not found\n",cmd);
+  while(1){
+    printf("$ ");
+    char cmd[100];
+    fgets(cmd,sizeof(cmd),stdin);
+    cmd[strcspn(cmd,"\n")]=0;
+    printf("%s: command not found\n",cmd);
+  }
+  
 
   return 0;
 }
