@@ -6,8 +6,9 @@ int main(int argc, char *argv[]) {
   setbuf(stdout, NULL);
 
   printf("$ ");
-  scanf("enter command: %d");
-  printf("invalid command");
+  char* cmd[100];
+  scanf("enter command: %c",cmd);
+  printf("%c: invalid command",cmd);
 
   return 0;
 }
