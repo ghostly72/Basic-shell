@@ -3,14 +3,14 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**",
-                "E:/msys2/ucrt64/include"
+                "E:/msys2/**"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
-            ]
+            ],
+            "compilerPath": "E:\\msys2\\ucrt64\\bin\\gcc"
         }
     ],
     "version": 4

@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include<unistd.h>
+#include <sys/wait.h> 
+// #include<windows.h>
 
 int main(int argc, char *argv[]) {
   // Flush after every printf
@@ -12,7 +14,7 @@ int main(int argc, char *argv[]) {
     char str[100];
     char *cmd[]={"type","exit","echo"};
     fgets(str,sizeof(str),stdin);
-    str[strcspn(str,"\n")]=0;
+    str[strcspn(str,"\n")]=0; //setting next line char as 0, so that c recognises this as the end of line
     if(strcmp("exit",str)==0)break;
 
     else if(strncmp("echo",str,4)==0){
@@ -51,9 +53,49 @@ int main(int argc, char *argv[]) {
       }
       // else printf("%s: not found\n",str);
     }
-    else printf("%s: not found\n",str);
-}
-  
+    else{
+      char *args[20];                                               
+      int arg_count = 0;                                            
+      char *token = strtok(str, " ");                               
+      while (token != NULL && arg_count < 9) {                      
+       args[arg_count++] = token;                                  
+       token = strtok(NULL, " ");                                  
+      }                                                             
+      args[arg_count] = NULL;
 
-  return 0;
+      char* path=getenv("PATH");
+      char* path_copy=strdup(path);
+      char *dir = strtok(path_copy, ":");                           
+      char *program_name = args[0];                                 
+      int found = 0;  
+      while(dir!=NULL){
+        char full_path[256];
+        // snprintf(full_path,sizeof(full_path),"%s/%s",dir,filname);
+        // if(!access(full_path,X_OK)){
+        //   // char* exe[256];
+        //   // while(filname!=NULL){
+        //   //   snprintf(exe,sizeof(exe),"%s ",filname);
+        //   //   filname=strtok(NULL," ");
+        //   // }
+        //   system(argv[0]);
+        // }
+        snprintf(full_path, sizeof(full_path), "%s/%s", dir, program_name);                                                       
+        if (access(full_path, X_OK) == 0) {                         
+          found = 1;                                                
+          pid_t pid = fork();                                       
+          if (pid == 0) {                                           
+            execv(full_path, args);                                 
+            exit(1);                                                
+          } else if (pid > 0) {                                     
+            wait(NULL);                                             
+          }                                                         
+          break; 
+        }    
+        dir=strtok(NULL,":");
+      }
+      if(!found)printf("%s: not found\n",program_name);
+    }
+  
+    
+  }return 0;
 }
