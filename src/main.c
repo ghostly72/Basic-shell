@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
   while(1){
     printf("$ ");
     char str[100];
-    char *cmd[]={"type","exit","echo"};
+    char *cmd[]={"type","exit","echo","pwd"};
     fgets(str,sizeof(str),stdin);
     str[strcspn(str,"\n")]=0; //setting next line char as 0, so that c recognises this as the end of line
     if(strcmp("exit",str)==0)break;
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
     else if(strncmp("type",str,4)==0){
       int found=0;
       char* cmd_name=str+5;
-      for(int i=0;i<3;i++){
+      for(int i=0;i<(sizeof(cmd)/sizeof(cmd[0]));i++){
         if(strcmp(cmd_name,cmd[i])==0){
           printf("%s is a shell builtin\n",cmd_name);
           found=1;break;
@@ -53,11 +53,15 @@ int main(int argc, char *argv[]) {
       }
       // else printf("%s: not found\n",str);
     }
+    else if(!strncmp("pwd",str,3)){
+      printf(getenv("PWD"));
+      printf("\n");
+    }
     else{
       char *args[20];                                               
       int arg_count = 0;                                            
       char *token = strtok(str, " ");                               
-      while (token != NULL && arg_count < 9) {                      
+      while (token != NULL && arg_count < 20) {                      
        args[arg_count++] = token;                                  
        token = strtok(NULL, " ");                                  
       }                                                             
