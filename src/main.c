@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
 #include<unistd.h>
 #include <sys/wait.h> 
+#include <unistd.h>
 // #include<windows.h>
 
 int main(int argc, char *argv[]) {
@@ -14,7 +16,9 @@ int main(int argc, char *argv[]) {
     char str[100];
     char *cmd[]={"type","exit","echo","pwd"};
     fgets(str,sizeof(str),stdin);
-    str[strcspn(str,"\n")]=0; //setting next line char as 0, so that c recognises this as the end of line
+    //The strcsspn function is used to find the number of characters in the given string before the 1st occurrence of a character from the defined set of characters 
+    int ind=strcspn(str,"\n");
+    str[ind]=0; //setting next line char as 0, so that c recognises this as the end of line
     if(strcmp("exit",str)==0)break;
 
     else if(strncmp("echo",str,4)==0){
@@ -53,9 +57,31 @@ int main(int argc, char *argv[]) {
       }
       // else printf("%s: not found\n",str);
     }
+    // system design-https://www.linkedin.com/posts/ankur-dhawan01_sde1-sde2-sde3-share-7421405307924406272-20tB?utm_source=social_share_send&utm_medium=member_desktop_web&rcm=ACoAAEHM7yIBxhW0OYnKbylC9ltkZ-XZq0uyj0c
     else if(!strncmp("pwd",str,3)){
       printf(getenv("PWD"));
       printf("\n");
+    }
+    else if(!strncmp("cd",str,2)){
+      char* args[20];
+      int cnt=0;
+      char* tok=strtok(str," ");
+      while(tok!=NULL){
+        args[cnt++]=tok;
+        tok=strtok(NULL," ");
+      }
+      args[cnt]=NULL;
+      char* dir=args[1];
+      struct stat sb;
+      if(stat(dir,&sb)==0 && S_ISDIR(sb.st_mode)){
+        chdir(dir);//affects only the internal kernel state for your process — it doesn’t touch any environment variables like PWD.
+        //process is now “in” that directory, but the environment variable $PWD (if you print it using getenv("PWD")) still holds the old path.
+        //thats y we need to use setenv to change the env var
+        setenv("PWD", dir, 1);
+        
+      }else{
+        printf("cd: %s: No such file or directory\n",dir);
+      }
     }
     else{
       char *args[20];                                               
