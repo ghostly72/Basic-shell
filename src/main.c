@@ -75,67 +75,71 @@ int main(int argc, char *argv[]) {
       args[cnt]=NULL;
 
       char *target = args[1];
-
-
-      char resolved[PATH_MAX];
-      if (realpath(target, resolved) != NULL) {
-        if (chdir(resolved) == 0) {
-          setenv("PWD", resolved, 1);
-          //int setenv(const char *name, const char *value, int overwrite);
-          //If overwrite is non-zero (e.g., 1), the variable's value is changed to value even if it already exists.
-          //If overwrite is zero (0), the variable's value is not changed if it already exists. 
-        } else {
-          fprintf(stderr, "cd: %s: %s\n", target, strerror(errno));
-          //  strerror(error) function in C maps an integer error code
-          //  (typically the value stored in the global variable errno) to a human-readable, locale-dependent error message string. 
-        }
-      } else {
-        fprintf(stderr, "cd: %s: No such file or directory\n", target);
+      if(!strcmp(target,"~")){
+        char* home=getenv("HOME");
+        setenv("PWD",home,1);
       }
+      else{
+        char resolved[PATH_MAX];
+        if (realpath(target, resolved) != NULL) {
+          if (chdir(resolved) == 0) {
+            setenv("PWD", resolved, 1);
+            //int setenv(const char *name, const char *value, int overwrite);
+            //If overwrite is non-zero (e.g., 1), the variable's value is changed to value even if it already exists.
+            //If overwrite is zero (0), the variable's value is not changed if it already exists. 
+          } else {
+            fprintf(stderr, "cd: %s: %s\n", target, strerror(errno));
+            //  strerror(error) function in C maps an integer error code
+            //  (typically the value stored in the global variable errno) to a human-readable, locale-dependent error message string. 
+          }
+        } else {
+          fprintf(stderr, "cd: %s: No such file or directory\n", target);
+        }
 
-      // char* pwd=getenv("PWD");
-      // char* arr[20];cnt=0;
-      // tok=strtok(pwd,"/");
-      // while(tok!=NULL){
-      //   arr[cnt++]=tok;
-      //   tok=strtok(NULL," ");
-      // }
-      // arr[cnt]=NULL;
-      
-      // char** dir=args[1];
-      // char* qr[100];int ind=0;
-      // tok=strtok(*args[1],"/");
-      // while(tok!=NULL){
-      //   qr[ind++]=tok;
-      //   tok=strtok(NULL," ");
-      // }
-      // qr[ind]=NULL;
-      // cnt--;//decrementinf cnt to point at last word of the current pwd
-      // ind=0;
-      // while(qr[ind]!=NULL){
-      //   if(!strcmp(qr[ind],"..")){
-      //     cnt--;
-      //   }
-      //   else if(!strcmp(qr[ind],".")){
-          
-      //   }
-      //   else{
-      //     cnt++;
-      //     arr[cnt]=qr[ind];
-      //   }
-      //   ind++;
-      // }
-      // dir=arr;
-      // struct stat sb;
-      // if(stat(*dir,&sb)==0 && S_ISDIR(sb.st_mode)){
-      //   chdir(*dir);//affects only the internal kernel state for your process — it doesn’t touch any environment variables like PWD.
-      //   //process is now “in” that directory, but the environment variable $PWD (if we print it using getenv("PWD")) still holds the old path.
-      //   //thats y we need to use setenv to change the env var
-      //   setenv("PWD", *dir, 1);
+        // char* pwd=getenv("PWD");
+        // char* arr[20];cnt=0;
+        // tok=strtok(pwd,"/");
+        // while(tok!=NULL){
+        //   arr[cnt++]=tok;
+        //   tok=strtok(NULL," ");
+        // }
+        // arr[cnt]=NULL;
         
-      // }else{
-      //   printf("cd: %s: No such file or directory\n",*dir);
-      // }
+        // char** dir=args[1];
+        // char* qr[100];int ind=0;
+        // tok=strtok(*args[1],"/");
+        // while(tok!=NULL){
+        //   qr[ind++]=tok;
+        //   tok=strtok(NULL," ");
+        // }
+        // qr[ind]=NULL;
+        // cnt--;//decrementinf cnt to point at last word of the current pwd
+        // ind=0;
+        // while(qr[ind]!=NULL){
+        //   if(!strcmp(qr[ind],"..")){
+        //     cnt--;
+        //   }
+        //   else if(!strcmp(qr[ind],".")){
+            
+        //   }
+        //   else{
+        //     cnt++;
+        //     arr[cnt]=qr[ind];
+        //   }
+        //   ind++;
+        // }
+        // dir=arr;
+        // struct stat sb;
+        // if(stat(*dir,&sb)==0 && S_ISDIR(sb.st_mode)){
+        //   chdir(*dir);//affects only the internal kernel state for your process — it doesn’t touch any environment variables like PWD.
+        //   //process is now “in” that directory, but the environment variable $PWD (if we print it using getenv("PWD")) still holds the old path.
+        //   //thats y we need to use setenv to change the env var
+        //   setenv("PWD", *dir, 1);
+          
+        // }else{
+        //   printf("cd: %s: No such file or directory\n",*dir);
+        // }
+      }
     }
     else{
       char *args[20];                                               
