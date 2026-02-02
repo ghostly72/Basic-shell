@@ -33,7 +33,11 @@ int parse_args(char *str, int start, char *args[], int max_args,char ch) {
             }
             while (isspace(str[pos + 1])) {pos++;space=1;}
             // if(space)args[argc++]=" ";
-        } else {
+        } else if(c=='\\'){
+            pos++;
+            tok[i++]=str[pos];
+        }
+        else {
             tok[i++] = c;
         }
         pos++;
