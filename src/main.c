@@ -7,7 +7,46 @@
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>
+#include <ctype.h>
 // #include<windows.h>
+
+
+
+
+int parse_args(char *str, int start, char *args[], int max_args) {
+    int pos = start;
+    int flag = 0;
+    int argc = 0;
+    char tok[256];
+    int i = 0;
+
+    while (str[pos] != 0) {
+        char c = str[pos];
+        if (c == '\'') {
+            flag = !flag;
+        } else if (isspace(c) && !flag) {
+            if (i > 0) {
+                tok[i] = 0;
+                args[argc++] = strdup(tok);
+                i = 0;
+                if (argc >= max_args - 1) break;
+            }
+            while (isspace(str[pos + 1])) pos++;
+        } else {
+            tok[i++] = c;
+        }
+        pos++;
+    }
+
+    if (i > 0) {
+        tok[i] = 0;
+        args[argc++] = strdup(tok);
+    }
+
+    args[argc] = NULL;
+    return argc;
+}
+
 
 int main(int argc, char *argv[]) {
   // Flush after every printf
@@ -23,10 +62,37 @@ int main(int argc, char *argv[]) {
     str[ind]=0; //setting next line char as 0, so that c recognises this as the end of line
     if(strcmp("exit",str)==0)break;
 
-    else if(strncmp("echo",str,4)==0){
-      int len=strlen(str);
-      len-=5;
-      printf("%.*s\n",len,str+5);
+    else if (!strncmp("echo", str, 4)) {
+      char *args[20];
+      int argc = parse_args(str, 5, args, 20);
+      for (int i = 0; i < argc; i++) {
+          printf("%s", args[i]);
+          if (i < argc - 1) printf(" ");
+      }
+      printf("\n");
+    } 
+    else if (!strncmp("cat", str, 3)) {
+        char *args[20];
+        args[0] = "cat";
+        int argc = parse_args(str, 4, &args[1], 19);
+        // If you call parse_args(..., args, ...) then args[0] inside the function writes into args[0] in the caller.
+// If you call parse_args(..., &args[1], ...) then args[0] inside the function writes into args[1] in the caller, args[1] inside writes into args[2] in the caller, and so on.
+// That’s exactly why you sometimes pass &args[1]: you want the parser to fill the array starting at index 1 so that the caller can preset args[0] (for example to the program name "cat").
+        args[argc + 1] = NULL;
+        pid_t pid = fork();
+        if (pid == 0) {
+            execvp("cat", args);
+            // exec replaces the current process image with a new program.
+            // That means:
+              // The process ID (PID) stays the same,
+              // But the entire code, stack, and memory of your program (the shell child)
+              // gets replaced by the new program (cat in this case).
+              //so the below error statements r never reached
+            perror("execvp failed");
+            exit(1);
+        } else { 
+            wait(NULL);//wait()- it blocks the parent until one of its children finishes.
+        }
     }
 
     else if(strncmp("type",str,4)==0){
@@ -141,6 +207,7 @@ int main(int argc, char *argv[]) {
         // }
       }
     }
+    
     else{
       char *args[20];                                               
       int arg_count = 0;                                            
@@ -187,3 +254,39 @@ int main(int argc, char *argv[]) {
     
   }return 0;
 }
+
+
+// char* func(char str[],int ind,int strt){
+//     int pos=strt,flag=0;
+//     char* args[20];int argc=0;
+//     char tok[100];int i=0;
+//     while(str[pos]!=0){
+//       char c=str[pos];
+//       if(c=='\''){
+//         flag=!flag;
+//       }
+//       else if(isspace(c) && !flag){
+//         if(i>0){
+//           tok[i]=0;
+//           args[argc]=strdup(tok);argc+=1;
+//           args[argc++]=" ";
+//           i=0;
+//         }
+//         while(pos+1<ind && isspace(str[pos+1]))pos++;
+//       }
+//       else{
+//         tok[i++]=str[pos];
+//       }
+//       pos++;
+//     }
+//     if(i>0){
+//       tok[i]=0;
+//       args[argc++]=strdup(tok);
+//     }
+//     char res[100];
+//     strcpy(res,args[0]);
+//     for(int i=1;i<argc;i++){
+//       strncat(res,args[i],strlen(args[i]));
+//     }
+//     return res;
+// }
