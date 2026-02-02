@@ -13,7 +13,7 @@
 
 
 
-int parse_args(char *str, int start, char *args[], int max_args) {
+int parse_args(char *str, int start, char *args[], int max_args,char ch) {
     int pos = start;
     int flag = 0;
     int argc = 0;
@@ -21,8 +21,8 @@ int parse_args(char *str, int start, char *args[], int max_args) {
     int i = 0;
 
     while (str[pos] != 0) {
-        char c = str[pos];
-        if (c == '\'') {
+        char c = str[pos];int space=0;
+        if (c == ch) {
             flag = !flag;
         } else if (isspace(c) && !flag) {
             if (i > 0) {
@@ -31,7 +31,8 @@ int parse_args(char *str, int start, char *args[], int max_args) {
                 i = 0;
                 if (argc >= max_args - 1) break;
             }
-            while (isspace(str[pos + 1])) pos++;
+            while (isspace(str[pos + 1])) {pos++;space=1;}
+            // if(space)args[argc++]=" ";
         } else {
             tok[i++] = c;
         }
@@ -64,7 +65,10 @@ int main(int argc, char *argv[]) {
 
     else if (!strncmp("echo", str, 4)) {
       char *args[20];
-      int argc = parse_args(str, 5, args, 20);
+      char ch='0';
+      if(str[5]=='\'')ch='\'';
+      else ch='"';
+      int argc = parse_args(str, 5, args, 20,ch);
       for (int i = 0; i < argc; i++) {
           printf("%s", args[i]);
           if (i < argc - 1) printf(" ");
@@ -74,7 +78,10 @@ int main(int argc, char *argv[]) {
     else if (!strncmp("cat", str, 3)) {
         char *args[20];
         args[0] = "cat";
-        int argc = parse_args(str, 4, &args[1], 19);
+        char ch='0';
+      if(str[4]=='\'')ch='\'';
+      else ch='"';
+        int argc = parse_args(str, 4, &args[1], 19,ch);
         // If you call parse_args(..., args, ...) then args[0] inside the function writes into args[0] in the caller.
 // If you call parse_args(..., &args[1], ...) then args[0] inside the function writes into args[1] in the caller, args[1] inside writes into args[2] in the caller, and so on.
 // That’s exactly why you sometimes pass &args[1]: you want the parser to fill the array starting at index 1 so that the caller can preset args[0] (for example to the program name "cat").
