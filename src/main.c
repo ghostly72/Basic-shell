@@ -21,7 +21,8 @@ int parse_args(char *str, int start, char *args[], int max_args,char ch) {
     int i = 0;
 
     while (str[pos] != 0) {
-        char c = str[pos];int space=0;
+        char c = str[pos];
+        //int space=0;
         // if (c == ch) {
         //     flag = !flag;
         // } else if (isspace(c) && !flag) {
@@ -58,7 +59,8 @@ int parse_args(char *str, int start, char *args[], int max_args,char ch) {
             while (isspace(str[pos + 1])) pos++;  // collapse spaces
         } 
         else {
-            tok[i++] = c;
+            if(ch=='"' && flag && c=='\\' )pos++;
+            tok[i++] = str[pos];
         }
         pos++;
     }
