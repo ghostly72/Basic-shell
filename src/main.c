@@ -22,21 +22,41 @@ int parse_args(char *str, int start, char *args[], int max_args,char ch) {
 
     while (str[pos] != 0) {
         char c = str[pos];int space=0;
-        if (c == ch) {
+        // if (c == ch) {
+        //     flag = !flag;
+        // } else if (isspace(c) && !flag) {
+        //     if (i > 0) {
+        //         tok[i] = 0;
+        //         args[argc++] = strdup(tok);
+        //         i = 0;
+        //         if (argc >= max_args - 1) break;
+        //     }
+        //     while (isspace(str[pos + 1])) {pos++;space=1;}
+        //     // if(space)args[argc++]=" ";
+        // } else if(flag && c=='\\' && (ch==' ' || ch=='"')){//
+        //     pos++;
+        //     tok[i++]=str[pos];
+        // }
+
+        if (c == ch && (ch == '\'' || ch == '"')) {
             flag = !flag;
-        } else if (isspace(c) && !flag) {
+        } 
+        else if (c == '\\' && !flag) {
+            // backslash outside quotes → escape next char
+            pos++;
+            if (str[pos] != 0) {
+                tok[i++] = str[pos];
+            }
+        }
+        else if (isspace(c) && !flag) {
             if (i > 0) {
                 tok[i] = 0;
                 args[argc++] = strdup(tok);
                 i = 0;
-                if (argc >= max_args - 1) break;
+                // if (argc >= max_args - 1) break;
             }
-            while (isspace(str[pos + 1])) {pos++;space=1;}
-            // if(space)args[argc++]=" ";
-        } else if(c=='\\'){
-            pos++;
-            tok[i++]=str[pos];
-        }
+            while (isspace(str[pos + 1])) pos++;  // collapse spaces
+        } 
         else {
             tok[i++] = c;
         }
@@ -70,8 +90,11 @@ int main(int argc, char *argv[]) {
     else if (!strncmp("echo", str, 4)) {
       char *args[20];
       char ch='0';
-      if(str[5]=='\'')ch='\'';
-      else ch='"';
+      for(int i=0;i<100;i++){
+        if(str[i]=='\''){ch='\'';break;}
+        else if(str[i]=='"'){ch='"';break;}
+      }
+      if(ch=='0')ch=' ';
       int argc = parse_args(str, 5, args, 20,ch);
       for (int i = 0; i < argc; i++) {
           printf("%s", args[i]);
@@ -83,12 +106,17 @@ int main(int argc, char *argv[]) {
         char *args[20];
         args[0] = "cat";
         char ch='0';
-      if(str[4]=='\'')ch='\'';
-      else ch='"';
+      // if(str[4]=='\'')ch='\'';
+      // else ch='"';
+      for(int i=0;i<100;i++){
+        if(str[i]=='\''){ch='\'';break;}
+        else if(str[i]=='"'){ch='"';break;}
+      }
+      if(ch=='0')ch=' ';
         int argc = parse_args(str, 4, &args[1], 19,ch);
         // If you call parse_args(..., args, ...) then args[0] inside the function writes into args[0] in the caller.
-// If you call parse_args(..., &args[1], ...) then args[0] inside the function writes into args[1] in the caller, args[1] inside writes into args[2] in the caller, and so on.
-// That’s exactly why you sometimes pass &args[1]: you want the parser to fill the array starting at index 1 so that the caller can preset args[0] (for example to the program name "cat").
+        // If you call parse_args(..., &args[1], ...) then args[0] inside the function writes into args[1] in the caller, args[1] inside writes into args[2] in the caller, and so on.
+        // That’s exactly why you sometimes pass &args[1]: you want the parser to fill the array starting at index 1 so that the caller can preset args[0] (for example to the program name "cat").
         args[argc + 1] = NULL;
         pid_t pid = fork();
         if (pid == 0) {
