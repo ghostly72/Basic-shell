@@ -11,68 +11,134 @@
 // #include<windows.h>
 
 
-
-
-int parse_args(char *str, int start, char *args[], int max_args,char ch) {
+int parse_args(char *str, int start, char *args[], int max_args) {
     int pos = start;
-    int flag = 0;
     int argc = 0;
-    char tok[256];
     int i = 0;
+    char tok[512];
+    int in_single = 0, in_double = 0;
 
     while (str[pos] != 0) {
         char c = str[pos];
-        //int space=0;
-        // if (c == ch) {
-        //     flag = !flag;
-        // } else if (isspace(c) && !flag) {
-        //     if (i > 0) {
-        //         tok[i] = 0;
-        //         args[argc++] = strdup(tok);
-        //         i = 0;
-        //         if (argc >= max_args - 1) break;
-        //     }
-        //     while (isspace(str[pos + 1])) {pos++;space=1;}
-        //     // if(space)args[argc++]=" ";
-        // } else if(flag && c=='\\' && (ch==' ' || ch=='"')){//
-        //     pos++;
-        //     tok[i++]=str[pos];
-        // }
 
-        if (c == ch && (ch == '\'' || ch == '"')) {
-            flag = !flag;
-        } 
-        else if (c == '\\' && !flag) {
-            // backslash outside quotes → escape next char
-            pos++;
-            if (str[pos] != 0) {
-                tok[i++] = str[pos];
+        if (c == '\'' && !in_double) {
+            in_single = !in_single; // toggle single-quote mode
+        }
+        else if (c == '"' && !in_single) {
+            in_double = !in_double; // toggle double-quote mode
+        }
+        else if (c == '\\') {
+            if (in_single) {
+                // Inside single quotes → take backslash literally
+                tok[i++] = '\\';
+            } else {
+                // Outside or inside double quotes
+                // pos++;
+                // if (str[pos] == 0) break;
+                // // if (in_double && (str[pos] == '"' || str[pos] == '\\'))
+                // //     tok[i++] = str[pos];
+                // // else
+                //     tok[i++] = str[pos];
+
+                 pos++;
+                if (str[pos] == 0) break;
+                // inside double quotes → only escape \ and "
+                if (in_double && (str[pos] == '"' || str[pos] == '\\'))
+                    tok[i++] = str[pos];
+                else if (!in_single)
+                    tok[i++] = str[pos];
+                else
+                    tok[i++] = '\\';
             }
         }
-        else if (isspace(c) && !flag) {
+        //else if (c == '\\') {
+        //     pos++;
+        //     if (str[pos] == 0) break;
+        //     // inside double quotes → only escape \ and "
+        //     if (in_double && (str[pos] == '"' || str[pos] == '\\'))
+        //         tok[i++] = str[pos];
+        //     else if (!in_single)
+        //         tok[i++] = str[pos];
+        //     else
+        //         tok[i++] = '\\'; // literal backslash in single quotes
+        // }
+        else if (isspace(c) && !in_single && !in_double) {
             if (i > 0) {
-                tok[i] = 0;
+                tok[i] = '\0';
                 args[argc++] = strdup(tok);
                 i = 0;
-                // if (argc >= max_args - 1) break;
+                if (argc >= max_args - 1) break;
             }
-            while (isspace(str[pos + 1])) pos++;  // collapse spaces
-        } 
-        else {
-            if(ch=='"' && flag && c=='\\' )pos++;
-            tok[i++] = str[pos];
+            while (isspace(str[pos + 1])) pos++;
         }
+        else {
+            tok[i++] = c;
+        }
+
         pos++;
     }
 
     if (i > 0) {
-        tok[i] = 0;
+        tok[i] = '\0';
         args[argc++] = strdup(tok);
     }
 
     args[argc] = NULL;
     return argc;
 }
+
+
+// int parse_args(char *str, int start, char *args[], int max_args,char ch) {
+//     int pos = start;
+//     int flag = 0;
+//     int argc = 0;
+//     char tok[256];
+//     int i = 0;
+
+//     while (str[pos] != 0) {
+//         char c = str[pos];
+
+//         if ( ch == '\'' || ch == '"') {
+//             if(c == ch)flag = !flag;
+//             else{
+//               pos++;
+//               while(str[pos+1]!=c){
+//                 tok[i++]=str[pos++];
+//               }
+//               tok[i++]=pos;
+//             }
+//         } 
+//         else if (c == '\\' && !flag) {
+//             // backslash outside quotes → escape next char
+//             pos++;
+//             if (str[pos] != 0) {
+//                 tok[i++] = str[pos];
+//             }
+//         }
+//         else if (isspace(c) && !flag) {
+//             if (i > 0) {
+//                 tok[i] = 0;
+//                 args[argc++] = strdup(tok);
+//                 i = 0;
+//                 // if (argc >= max_args - 1) break;
+//             }
+//             while (isspace(str[pos + 1])) pos++;  // collapse spaces
+//         } 
+//         else {
+//             if(ch=='"' && flag && c=='\\' )pos++;
+//             tok[i++] = str[pos];
+//         }
+//         pos++;
+//     }
+
+//     if (i > 0) {
+//         tok[i] = 0;
+//         args[argc++] = strdup(tok);
+//     }
+
+//     args[argc] = NULL;
+//     return argc;
+// }
 
 
 int main(int argc, char *argv[]) {
@@ -91,13 +157,16 @@ int main(int argc, char *argv[]) {
 
     else if (!strncmp("echo", str, 4)) {
       char *args[20];
-      char ch='0';
-      for(int i=0;i<100;i++){
-        if(str[i]=='\''){ch='\'';break;}
-        else if(str[i]=='"'){ch='"';break;}
-      }
-      if(ch=='0')ch=' ';
-      int argc = parse_args(str, 5, args, 20,ch);
+      char ch=' ';int st=-1;
+      if(str[5]=='\'' || str[5]=='"')ch=str[5];
+      // if(str[5]=='\'')ch='\'';
+      // else if(str[5]=='"')ch='"';
+      // for(int i=0;i<100;i++){
+      //   if(str[i]=='\''){ch='\'';st=i;break;}
+      //   else if(str[i]=='"'){ch='"';st=i;break;}
+      // }
+      
+      int argc = parse_args(str, 5, args, 20);
       for (int i = 0; i < argc; i++) {
           printf("%s", args[i]);
           if (i < argc - 1) printf(" ");
@@ -107,15 +176,16 @@ int main(int argc, char *argv[]) {
     else if (!strncmp("cat", str, 3)) {
         char *args[20];
         args[0] = "cat";
-        char ch='0';
+        char ch=' ';int st=-1;
+        if(str[5]=='\'' || str[5]=='"')ch=str[5];
       // if(str[4]=='\'')ch='\'';
-      // else ch='"';
-      for(int i=0;i<100;i++){
-        if(str[i]=='\''){ch='\'';break;}
-        else if(str[i]=='"'){ch='"';break;}
-      }
-      if(ch=='0')ch=' ';
-        int argc = parse_args(str, 4, &args[1], 19,ch);
+      // else if(str[4]=='\'') ch='"';
+      // for(int i=0;i<100;i++){
+      //   if(str[i]=='\''){ch='\'';st=i;break;}
+      //   else if(str[i]=='"'){ch='"';st=i;break;}
+      // }
+      
+        int argc = parse_args(str, 4, &args[1], 19);
         // If you call parse_args(..., args, ...) then args[0] inside the function writes into args[0] in the caller.
         // If you call parse_args(..., &args[1], ...) then args[0] inside the function writes into args[1] in the caller, args[1] inside writes into args[2] in the caller, and so on.
         // That’s exactly why you sometimes pass &args[1]: you want the parser to fill the array starting at index 1 so that the caller can preset args[0] (for example to the program name "cat").
@@ -250,46 +320,72 @@ int main(int argc, char *argv[]) {
     }
     
     else{
-      char *args[20];                                               
-      int arg_count = 0;                                            
-      char *token = strtok(str, " ");                               
-      while (token != NULL && arg_count < 20) {                      
-       args[arg_count++] = token;                                  
-       token = strtok(NULL, " ");                                  
-      }                                                             
-      args[arg_count] = NULL;
+      char *args[20];
+      int argc = 0;
 
-      char* path=getenv("PATH");
-      char* path_copy=strdup(path);
-      char *dir = strtok(path_copy, ":");                           
-      char *program_name = args[0];                                 
-      int found = 0;  
-      while(dir!=NULL){
-        char full_path[256];
-        // snprintf(full_path,sizeof(full_path),"%s/%s",dir,filname);
-        // if(!access(full_path,X_OK)){
-        //   // char* exe[256];
-        //   // while(filname!=NULL){
-        //   //   snprintf(exe,sizeof(exe),"%s ",filname);
-        //   //   filname=strtok(NULL," ");
-        //   // }
-        //   system(argv[0]);
-        // }
-        snprintf(full_path, sizeof(full_path), "%s/%s", dir, program_name);                                                       
-        if (access(full_path, X_OK) == 0) {                         
-          found = 1;                                                
-          pid_t pid = fork();                                       
-          if (pid == 0) {                                           
-            execv(full_path, args);                                 
-            exit(1);                                                
-          } else if (pid > 0) {                                     
-            wait(NULL);                                             
-          }                                                         
-          break; 
-        }    
-        dir=strtok(NULL,":");
+      int pos = 0;
+      while (isspace(str[pos])) pos++;
+
+      // Parse executable name
+      char prog[256];
+      int i = 0;
+      if (str[pos] == '\'' || str[pos] == '"') {
+          char quote = str[pos++];
+          // prog[i++] = str[pos++];
+          while (str[pos] != 0 && str[pos] != quote) {
+              prog[i++] = str[pos++];
+          }
+          prog[i] = '\0';
+          if (str[pos] == quote) pos++; // skip closing quote
+      } else {
+          while (str[pos] != 0 && !isspace(str[pos])) {
+              prog[i++] = str[pos++];
+          }
+          prog[i] = '\0';
       }
-      if(!found)printf("%s: not found\n",program_name);
+
+      args[argc++] = strdup(prog);
+
+      // Parse remaining arguments (can reuse your parse_args here)
+      while (isspace(str[pos])) pos++;
+      int argstart = pos;
+      int extra = parse_args(str, argstart, &args[argc], 19);
+      argc += extra;
+
+      args[argc] = NULL;// execv() function in C is used to replace the current process image with a new process image. 
+      //It takes two parameters: the path to the executable file and a null-terminated array of string arguments. 
+      //that's y we terminate this with null
+
+
+      // Search PATH
+      char *path = getenv("PATH");
+      char *copy = strdup(path);//y do we need to make a copy of path??
+      char *dir = strtok(copy, ":");
+      int found = 0;
+
+      while (dir != NULL) {
+          char full_path[512];
+          snprintf(full_path, sizeof(full_path), "%s/%s", dir, args[0]);
+          if (access(full_path, X_OK) == 0) {
+              found = 1;
+              pid_t pid = fork();
+              if (pid == 0) {
+                  execv(full_path, args);// arg[0] is the name of th excutable that we extrcted from insifr the wuotes
+                  //in that case, how can we pass the args array simply as an array of argumernts in execv?
+
+                  perror("execv failed");
+                  exit(1);
+              } else {
+                  wait(NULL);
+              }
+              break;
+          }
+          dir = strtok(NULL, ":");
+      }
+      if (!found)
+          fprintf(stderr, "%s: command not found\n", args[0]);
+      free(copy);
+
     }
   
     
